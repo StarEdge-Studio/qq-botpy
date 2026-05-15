@@ -1,7 +1,7 @@
 import asyncio
 import traceback
 from types import TracebackType
-from typing import Any, Callable, Coroutine, Dict, List, Tuple, Optional, Union, Type
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Union, Type
 
 from . import logging
 from .api import BotAPI
@@ -25,7 +25,18 @@ _loop: Any = _LoopSentinel()
 
 
 class Client:
-    """``Client` 是一个用于与 QQ频道机器人 Websocket 和 API 交互的类。"""
+    """``Client` 是一个用于与 QQ频道机器人 Websocket 和 API 交互的类。
+
+    使用装饰器注册事件处理函数::
+
+        client = botpy.Client(intents=intents)
+
+        @client.on("at_message_create")
+        async def handle_at_message(message: Message):
+            await message.reply(content="received")
+
+        client.run(appid="xxx", secret="xxx")
+    """
 
     def __init__(
         self,
@@ -52,7 +63,6 @@ class Client:
         """
         self.intents: int = intents.value
         self.ret_coro: bool = False
-        # TODO loop的整体梳理 @veehou
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
         self.http: BotHttp = BotHttp(timeout=timeout, is_sandbox=is_sandbox)
         self.api: BotAPI = BotAPI(http=self.http)
@@ -62,6 +72,8 @@ class Client:
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
         self._ws_ap: Dict = {}
 
+        self._event_handlers: Dict[str, List[Callable]] = {}
+
         logging.configure_logging(
             config=log_config,
             _format=log_format,
@@ -69,6 +81,79 @@ class Client:
             bot_log=bot_log,
             ext_handlers=ext_handlers,
         )
+
+    def on(self, event: str):
+        """装饰器：注册一个WebSocket事件的处理函数。
+
+        用法::
+
+            @client.on("at_message_create")
+            async def handle_at_message(message):
+                await message.reply(content="hello")
+
+        Args:
+          event (str): 事件名称，如 "at_message_create", "c2c_message_create" 等。
+        """
+
+        def decorator(func: Callable):
+            self.add_listener(func, event)
+            return func
+
+        return decorator
+
+    def add_listener(self, func: Callable, event: str = None):
+        """添加一个事件监听函数。
+
+        Args:
+          func (Callable): 事件处理函数。
+          event (str): 事件名称。如果为None，则使用函数名。
+        """
+        if event is None:
+            event = func.__name__
+        if event not in self._event_handlers:
+            self._event_handlers[event] = []
+        self._event_handlers[event].append(func)
+
+    def listen(self, event: str = None):
+        """装饰器：注册事件处理函数 (``on`` 的别名)。
+
+        如果未指定事件名称，则使用函数名作为事件名称。
+
+        用法::
+
+            @client.listen()
+            async def at_message_create(message):
+                await message.reply(content="hello")
+        """
+
+        def decorator(func: Callable):
+            self.add_listener(func, event)
+            return func
+
+        return decorator
+
+    def remove_listener(self, func: Callable, event: str = None):
+        """移除已注册的事件监听函数。
+
+        Args:
+          func (Callable): 要移除的事件处理函数。
+          event (str): 事件名称。如果为None，则使用函数名。
+        """
+        if event is None:
+            event = func.__name__
+        if event in self._event_handlers and func in self._event_handlers[event]:
+            self._event_handlers[event].remove(func)
+
+    def clear_listeners(self, event: str = None):
+        """清除事件监听函数。
+
+        Args:
+          event (str): 事件名称。如果为None，则清除所有事件的监听函数。
+        """
+        if event is None:
+            self._event_handlers.clear()
+        elif event in self._event_handlers:
+            self._event_handlers[event].clear()
 
     async def __aenter__(self):
         _log.debug("[botpy] 机器人客户端: __aenter__")
@@ -102,6 +187,46 @@ class Client:
 
     def is_closed(self) -> bool:
         return self._closed
+
+    async def send_message(self, channel_id: str, content: str = None, **kwargs):
+        """主动推送频道消息。
+
+        Args:
+          channel_id (str): 子频道 ID。
+          content (str): 消息文本内容。
+          **kwargs: 其他可选参数，如 embed, ark, markdown, image, file_image, keyboard 等。
+        """
+        return await self.api.post_message(channel_id=channel_id, content=content, **kwargs)
+
+    async def send_group_message(self, group_openid: str, content: str = None, **kwargs):
+        """主动推送群聊消息。
+
+        Args:
+          group_openid (str): 群 ID。
+          content (str): 消息文本内容。
+          **kwargs: 其他可选参数，如 msg_type, embed, ark, markdown, media, keyboard 等。
+        """
+        return await self.api.post_group_message(group_openid=group_openid, content=content, **kwargs)
+
+    async def send_c2c_message(self, openid: str, content: str = None, **kwargs):
+        """主动推送 C2C (私聊) 消息。
+
+        Args:
+          openid (str): 用户 ID。
+          content (str): 消息文本内容。
+          **kwargs: 其他可选参数，如 msg_type, embed, ark, markdown, media, keyboard 等。
+        """
+        return await self.api.post_c2c_message(openid=openid, content=content, **kwargs)
+
+    async def send_dms_message(self, guild_id: str, content: str = None, **kwargs):
+        """主动推送私信消息。
+
+        Args:
+          guild_id (str): 私信会话 ID (来自 create_dms 的返回值)。
+          content (str): 消息文本内容。
+          **kwargs: 其他可选参数，如 embed, ark, markdown, image, file_image, keyboard 等。
+        """
+        return await self.api.post_dms(guild_id=guild_id, content=content, **kwargs)
 
     async def on_ready(self):
         pass
@@ -250,17 +375,26 @@ class Client:
     def ws_dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
         """分发ws的下行事件
 
-        解析client类的on_event事件，进行对应的事件回调
+        优先通过装饰器注册的监听函数处理，同时兼容旧的 on_EVENT 命名约定。
         """
         _log.debug("[botpy] 调度事件: %s", event)
-        method = "on_" + event
+        dispatched = False
 
+        # 新的装饰器注册方式：通过 @client.on("event_name") 注册
+        if event in self._event_handlers:
+            for handler in self._event_handlers[event]:
+                self._schedule_event(handler, event, *args, **kwargs)
+                dispatched = True
+
+        # 旧的命名约定方式：on_eventname (向后兼容)
+        method = "on_" + event
         if hasattr(self, method):
             coro = getattr(self, method)
             self._schedule_event(coro, method, *args, **kwargs)
-        else:
-            _log.debug("[botpy] 事件: %s 未注册", event)
+            dispatched = True
 
+        if not dispatched:
+            _log.debug("[botpy] 事件: %s 未注册", event)
 
     def _schedule_event(
         self,

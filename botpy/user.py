@@ -3,10 +3,10 @@ from .types import user
 
 
 class Member:
-    __slots__ = ("_api", "_ctx", "user", "nick", "roles", "joined_at", "event_id", "guild_id")
+    __slots__ = ("api", "user", "nick", "roles", "joined_at", "event_id", "guild_id")
 
     def __init__(self, api: BotAPI, event_id, data: user.GuildMemberPayload):
-        self._api = api
+        self.api = api
         
         self.user = self._User(data.get("user", {}))
         self.nick = data.get("nick", None)

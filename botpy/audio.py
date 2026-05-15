@@ -4,8 +4,7 @@ from .types import audio
 
 class Audio:
     __slots__ = (
-        "_api",
-        "_ctx",
+        "api",
         "channel_id",
         "guild_id",
         "audio_url",
@@ -13,7 +12,7 @@ class Audio:
         "event_id")
 
     def __init__(self, api: BotAPI, event_id, data: audio.AudioAction):
-        self._api = api
+        self.api = api
 
         self.channel_id = data.get("channel_id", None)
         self.guild_id = data.get("guild_id", None)
@@ -27,15 +26,14 @@ class Audio:
 
 class PublicAudio:
     __slots__ = (
-        "_api",
-        "_ctx",
+        "api",
         "guild_id",
         "channel_id",
         "channel_type",
         "user_id")
 
     def __init__(self, api: BotAPI, data: audio.AudioLive):
-        self._api = api
+        self.api = api
         self.guild_id = data.get("guild_id", None)
         self.channel_id = data.get("channel_id", None)
         self.channel_type = data.get("channel_type", None)

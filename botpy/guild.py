@@ -4,8 +4,7 @@ from .types import guild
 
 class Guild:
     __slots__ = (
-        "_api",
-        "_ctx",
+        "api",
         "id",
         "name",
         "icon",
@@ -19,7 +18,7 @@ class Guild:
     )
 
     def __init__(self, api: BotAPI, event_id, data: guild.GuildPayload):
-        self._api = api
+        self.api = api
 
         self.id = data.get("id", None)
         self.name = data.get("name", None)

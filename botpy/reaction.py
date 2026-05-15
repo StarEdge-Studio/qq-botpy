@@ -4,8 +4,7 @@ from .types import reaction
 
 class Reaction:
     __slots__ = (
-        "_api",
-        "_ctx",
+        "api",
         "user_id",
         "channel_id",
         "guild_id",
@@ -14,7 +13,7 @@ class Reaction:
         "event_id")
 
     def __init__(self, api: BotAPI, event_id, data: reaction.Reaction):
-        self._api = api
+        self.api = api
 
         self.user_id = data.get("user_id", None)
         self.channel_id = data.get("channel_id", None)

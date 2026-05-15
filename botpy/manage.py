@@ -4,7 +4,7 @@ from .api import BotAPI
 
 class GroupManageEvent:
     __slots__ = (
-        "_api",
+        "api",
         "event_id",
         "timestamp",
         "group_openid",
@@ -12,7 +12,7 @@ class GroupManageEvent:
     )
 
     def __init__(self, api: BotAPI, event_id, data: Dict):
-        self._api = api
+        self.api = api
         self.event_id = event_id
         self.timestamp = data.get("timestamp", None)
         self.group_openid = data.get("group_openid", None)
@@ -24,14 +24,14 @@ class GroupManageEvent:
 
 class C2CManageEvent:
     __slots__ = (
-        "_api",
+        "api",
         "event_id",
         "timestamp",
         "openid",
     )
 
     def __init__(self, api: BotAPI, event_id, data: Dict):
-        self._api = api
+        self.api = api
         self.event_id = event_id
         self.timestamp = data.get("timestamp", None)
         self.openid = data.get("openid", None)

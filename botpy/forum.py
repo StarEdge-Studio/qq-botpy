@@ -69,7 +69,7 @@ class _Url:
 
 class Thread:
     __slots__ = (
-        "_api",
+        "api",
         "thread_info",
         "channel_id",
         "guild_id",
@@ -77,7 +77,7 @@ class Thread:
         "event_id")
 
     def __init__(self, api: BotAPI, event_id, data: forum.Thread):
-        self._api = api
+        self.api = api
 
         self.author_id = data.get("author_id", None)
         self.channel_id = data.get("channel_id", None)
@@ -154,7 +154,7 @@ class Thread:
 
 class OpenThread:
     __slots__ = (
-        "_api",
+        "api",
         "thread_info",
         "channel_id",
         "guild_id",
@@ -162,7 +162,7 @@ class OpenThread:
         "event_id")
 
     def __init__(self, api: BotAPI, data: forum.OpenForumEvent):
-        self._api = api
+        self.api = api
 
         self.guild_id = data.get("guild_id", None)
         self.channel_id = data.get("channel_id", None)

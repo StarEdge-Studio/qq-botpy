@@ -4,8 +4,7 @@ from .types import interaction
 
 class Interaction:
     __slots__ = (
-        "_api",
-        "_ctx",
+        "api",
         "id",
         "application_id",
         "type",
@@ -23,7 +22,7 @@ class Interaction:
     )
 
     def __init__(self, api: BotAPI, event_id, data: interaction.InteractionPayload):
-        self._api = api
+        self.api = api
 
         self.id = data.get("id", None)
         self.type = data.get("type", None)
@@ -61,3 +60,37 @@ class Interaction:
 
         def __repr__(self):
             return str(self.__dict__)
+
+    async def reply(self, content: str = None, **kwargs):
+        """回复按钮点击事件。
+
+        根据 chat_type / scene 自动选择正确的发送方式，并使用交互事件的 event_id 进行回复：
+        - 频道消息 (chat_type=0): 发送到对应频道子频道
+        - 群聊消息 (chat_type=1): 发送到对应群
+        - C2C消息 (chat_type=2): 发送到对应用户
+
+        Args:
+          content (str): 消息文本内容。
+          **kwargs: 其他可选参数。
+        """
+        if self.chat_type == 0:
+            return await self.api.post_message(
+                channel_id=self.channel_id,
+                content=content,
+                event_id=self.id,
+                **kwargs,
+            )
+        elif self.chat_type == 1:
+            return await self.api.post_group_message(
+                group_openid=self.group_openid,
+                content=content,
+                event_id=self.id,
+                **kwargs,
+            )
+        elif self.chat_type == 2:
+            return await self.api.post_c2c_message(
+                openid=self.user_openid,
+                content=content,
+                event_id=self.id,
+                **kwargs,
+            )

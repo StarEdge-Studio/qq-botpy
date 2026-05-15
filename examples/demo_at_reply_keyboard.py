@@ -3,7 +3,6 @@ import os
 
 import botpy
 from botpy import BotAPI
-
 from botpy.message import Message
 from botpy.types.inline import Keyboard, Button, RenderData, Action, Permission, KeyboardRow
 from botpy.types.message import MarkdownPayload, KeyboardPayload
@@ -11,11 +10,7 @@ from botpy.ext.cog_yaml import read
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
-
-class MyClient(botpy.Client):
-    async def on_at_message_create(self, message: Message):
-        await send_template_keyboard(self.api, message)
-        await send_self_defined_keyboard(self.api, message)
+client = botpy.Client(intents=botpy.Intents(public_guild_messages=True))
 
 
 async def send_template_keyboard(api: BotAPI, message: Message):
@@ -50,8 +45,11 @@ def build_a_demo_keyboard() -> Keyboard:
     return Keyboard(rows=[row1])
 
 
+@client.on("at_message_create")
+async def handle_at_message(message: Message):
+    await send_template_keyboard(client.api, message)
+    await send_self_defined_keyboard(client.api, message)
+
+
 if __name__ == "__main__":
-    # async的异步接口的使用示例
-    intents = botpy.Intents(public_guild_messages=True)
-    client = MyClient(intents=intents)
     client.run(appid=test_config["appid"], secret=test_config["secret"])

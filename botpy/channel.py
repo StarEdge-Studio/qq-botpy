@@ -4,7 +4,7 @@ from .types import channel
 
 class Channel:
     __slots__ = (
-        "_api",
+        "api",
         "guild_id",
         "id",
         "name",
@@ -20,7 +20,7 @@ class Channel:
     )
 
     def __init__(self, api: BotAPI, event_id, data: channel.ChannelPayload):
-        self._api = api
+        self.api = api
 
         self.id = data.get("id", None)
         self.name = data.get("name", None)

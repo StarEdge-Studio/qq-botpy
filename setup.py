@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="qq-botpy",
-    version=os.getenv("VERSION_NAME"),
+    version="2.0.0",
     author="veehou",
     author_email="veehou@tencent.com",
     description="qq robot client with python3",

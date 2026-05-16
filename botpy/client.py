@@ -228,6 +228,28 @@ class Client:
         """
         return await self.api.post_dms(guild_id=guild_id, content=content, **kwargs)
 
+    async def send_c2c_file(self, openid: str, file_type: int, url: str, srv_send_msg: bool = False):
+        """发送 C2C 富媒体文件（图片/视频/语音）。
+
+        Args:
+          openid (str): 用户 ID。
+          file_type (int): 媒体类型：1=图片png/jpg, 2=视频mp4, 3=语音silk。
+          url (str): 媒体资源的 url。
+          srv_send_msg (bool): True 直接发送消息并占用主动消息频次。
+        """
+        return await self.api.post_c2c_file(openid=openid, file_type=file_type, url=url, srv_send_msg=srv_send_msg)
+
+    async def send_group_file(self, group_openid: str, file_type: int, url: str, srv_send_msg: bool = False):
+        """发送群聊富媒体文件（图片/视频/语音）。
+
+        Args:
+          group_openid (str): 群 ID。
+          file_type (int): 媒体类型：1=图片png/jpg, 2=视频mp4, 3=语音silk。
+          url (str): 媒体资源的 url。
+          srv_send_msg (bool): True 直接发送消息并占用主动消息频次。
+        """
+        return await self.api.post_group_file(group_openid=group_openid, file_type=file_type, url=url, srv_send_msg=srv_send_msg)
+
     async def on_ready(self):
         pass
 

@@ -98,7 +98,12 @@ class Message:
         else:
             kwargs["markdown"] = MarkdownPayload(content=at_tag + existing_content)
 
-    async def reply(self, at_user: bool = False, quote: bool = False, **kwargs):
+    async def reply(self, at_user: bool = False, quote: bool = False, as_markdown: bool = False, **kwargs):
+        if as_markdown:
+            kwargs.setdefault("msg_type", 2)
+            if "markdown" not in kwargs:
+                content = kwargs.pop("content", "")
+                kwargs["markdown"] = MarkdownPayload(content=content)
         if at_user and self.author.id:
             self._apply_at_user(self.author.id, kwargs)
         if quote:
@@ -200,7 +205,12 @@ class DirectMessage:
         else:
             kwargs["markdown"] = MarkdownPayload(content=at_tag + existing_content)
 
-    async def reply(self, at_user: bool = False, quote: bool = False, **kwargs):
+    async def reply(self, at_user: bool = False, quote: bool = False, as_markdown: bool = False, **kwargs):
+        if as_markdown:
+            kwargs.setdefault("msg_type", 2)
+            if "markdown" not in kwargs:
+                content = kwargs.pop("content", "")
+                kwargs["markdown"] = MarkdownPayload(content=content)
         if at_user and self.author.id:
             self._apply_at_user(self.author.id, kwargs)
         if quote:
@@ -317,7 +327,12 @@ class GroupMessage(BaseMessage):
         def __repr__(self):
             return str(self.__dict__)
 
-    async def reply(self, at_user: bool = False, quote: bool = False, **kwargs):
+    async def reply(self, at_user: bool = False, quote: bool = False, as_markdown: bool = False, **kwargs):
+        if as_markdown:
+            kwargs.setdefault("msg_type", 2)
+            if "markdown" not in kwargs:
+                content = kwargs.pop("content", "")
+                kwargs["markdown"] = MarkdownPayload(content=content)
         if at_user and self.author.member_openid:
             self._apply_at_user(self.author.member_openid, kwargs)
         if quote:
@@ -344,7 +359,12 @@ class C2CMessage(BaseMessage):
         def __repr__(self):
             return str(self.__dict__)
 
-    async def reply(self, at_user: bool = False, quote: bool = False, **kwargs):
+    async def reply(self, at_user: bool = False, quote: bool = False, as_markdown: bool = False, **kwargs):
+        if as_markdown:
+            kwargs.setdefault("msg_type", 2)
+            if "markdown" not in kwargs:
+                content = kwargs.pop("content", "")
+                kwargs["markdown"] = MarkdownPayload(content=content)
         if at_user and self.author.user_openid:
             self._apply_at_user(self.author.user_openid, kwargs)
         if quote:

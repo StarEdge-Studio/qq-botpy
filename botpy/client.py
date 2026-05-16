@@ -188,45 +188,90 @@ class Client:
     def is_closed(self) -> bool:
         return self._closed
 
-    async def send_message(self, channel_id: str, content: str = None, **kwargs):
+    async def send_message(self, channel_id: str, content: str = None, at_user: str = None, as_markdown: bool = False, **kwargs):
         """主动推送频道消息。
 
         Args:
           channel_id (str): 子频道 ID。
           content (str): 消息文本内容。
+          at_user (str): @指定用户 ID。
+          as_markdown (bool): 将消息内容转为 markdown 格式发送。
           **kwargs: 其他可选参数，如 embed, ark, markdown, image, file_image, keyboard 等。
         """
+        if as_markdown or at_user:
+            kwargs = self._prepare_message_kwargs(content, at_user, as_markdown, kwargs)
+            return await self.api.post_message(channel_id=channel_id, **kwargs)
         return await self.api.post_message(channel_id=channel_id, content=content, **kwargs)
 
-    async def send_group_message(self, group_openid: str, content: str = None, **kwargs):
+    async def send_group_message(self, group_openid: str, content: str = None, at_user: str = None, as_markdown: bool = False, **kwargs):
         """主动推送群聊消息。
 
         Args:
           group_openid (str): 群 ID。
           content (str): 消息文本内容。
+          at_user (str): @指定成员的 member_openid。
+          as_markdown (bool): 将消息内容转为 markdown 格式发送。
           **kwargs: 其他可选参数，如 msg_type, embed, ark, markdown, media, keyboard 等。
         """
+        if as_markdown or at_user:
+            kwargs = self._prepare_message_kwargs(content, at_user, as_markdown, kwargs)
+            return await self.api.post_group_message(group_openid=group_openid, **kwargs)
         return await self.api.post_group_message(group_openid=group_openid, content=content, **kwargs)
 
-    async def send_c2c_message(self, openid: str, content: str = None, **kwargs):
+    async def send_c2c_message(self, openid: str, content: str = None, at_user: str = None, as_markdown: bool = False, **kwargs):
         """主动推送 C2C (私聊) 消息。
 
         Args:
           openid (str): 用户 ID。
           content (str): 消息文本内容。
+          at_user (str): @指定用户的 user_openid。
+          as_markdown (bool): 将消息内容转为 markdown 格式发送。
           **kwargs: 其他可选参数，如 msg_type, embed, ark, markdown, media, keyboard 等。
         """
+        if as_markdown or at_user:
+            kwargs = self._prepare_message_kwargs(content, at_user, as_markdown, kwargs)
+            return await self.api.post_c2c_message(openid=openid, **kwargs)
         return await self.api.post_c2c_message(openid=openid, content=content, **kwargs)
 
-    async def send_dms_message(self, guild_id: str, content: str = None, **kwargs):
+    async def send_dms_message(self, guild_id: str, content: str = None, at_user: str = None, as_markdown: bool = False, **kwargs):
         """主动推送私信消息。
 
         Args:
           guild_id (str): 私信会话 ID (来自 create_dms 的返回值)。
           content (str): 消息文本内容。
+          at_user (str): @指定用户 ID。
+          as_markdown (bool): 将消息内容转为 markdown 格式发送。
           **kwargs: 其他可选参数，如 embed, ark, markdown, image, file_image, keyboard 等。
         """
+        if as_markdown or at_user:
+            kwargs = self._prepare_message_kwargs(content, at_user, as_markdown, kwargs)
+            return await self.api.post_dms(guild_id=guild_id, **kwargs)
         return await self.api.post_dms(guild_id=guild_id, content=content, **kwargs)
+
+    @staticmethod
+    def _prepare_message_kwargs(content: str, at_user: str, as_markdown: bool, kwargs: dict) -> dict:
+        from botpy.types.message import MarkdownPayload
+
+        kwargs.pop("content", None)
+        kwargs.setdefault("msg_type", 2)
+
+        if as_markdown and "markdown" not in kwargs:
+            kwargs["markdown"] = MarkdownPayload(content=content or "")
+
+        if at_user:
+            at_tag = f'<qqbot-at-user id="{at_user}" /> '
+            existing_md = kwargs.get("markdown")
+            if existing_md:
+                md_content = at_tag + existing_md.get("content", "")
+                kwargs["markdown"] = MarkdownPayload(
+                    content=md_content,
+                    custom_template_id=existing_md.get("custom_template_id"),
+                    params=existing_md.get("params"),
+                )
+            else:
+                kwargs["markdown"] = MarkdownPayload(content=at_tag + (content or ""))
+
+        return kwargs
 
     async def send_c2c_file(self, openid: str, file_type: int, url: str, srv_send_msg: bool = False):
         """发送 C2C 富媒体文件（图片/视频/语音）。
